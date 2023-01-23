@@ -1,13 +1,21 @@
-const int x_pin = A0;
-const int y_pin = A1;
-const int z_pin = A2;
+const int x_pin = 0;
+const int y_pin = 1;
+const int z_pin = 2;
 int raw_min = 0;
 int raw_max = 1023;
 const int sample_size = 10;
 
+int pulse_pin = 3;
+int LED = 13; // the on-board LED
+int pulse_signal; // holding incoming raw data, ranging from 0 to 1024
+int threshold = 550;
+
 void setup()
 {
-  Serial.begin(9600);
+  pinMode(A3, INPUT);
+  pinMode(LED, OUTPUT); // blinking LED according to the heartbeat
+
+  Serial.begin(9600); // setting up serial communication at certain speed
 }
 
 void loop() {
@@ -37,6 +45,15 @@ void loop() {
   Serial.print(z_avalue, 0);
   Serial.print("G, ");
   Serial.println("");
+
+  pulse_signal = analogRead(pulse_pin);  // Read the PulseSensor's value.
+  Serial.println(pulse_signal);
+
+  if(pulse_signal > threshold) {
+    digitalWrite(LED, HIGH);
+  } else {
+    digitalWrite(LED, LOW);
+  }
   
   delay(200);
 }
