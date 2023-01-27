@@ -46,6 +46,7 @@ void loop() {
   Serial.print("G, ");
   Serial.println("");
 
+  // Pulse Sensor
   pulse_signal = analogRead(pulse_pin);  // Read the PulseSensor's value.
   Serial.println(pulse_signal);
 
@@ -58,6 +59,7 @@ void loop() {
   delay(200);
 }
 
+// Gyroscope
 int get_axis(int pin)
 {
   long value = 0;
