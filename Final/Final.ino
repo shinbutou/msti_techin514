@@ -10,10 +10,19 @@ int LED = 13; // the on-board LED
 int pulse_signal; // holding incoming raw data, ranging from 0 to 1024
 int threshold = 550;
 
+// AM2302 | Source: https://www.makerguides.com/dht11-dht22-arduino-tutorial/
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#define DHTPIN 2
+#define DHTTYPE DHT22 // AM2302
+
+DHT dht = DHT(DHTPIN, DHTTYPE);
+
 void setup()
 {
   pinMode(A3, INPUT);
   pinMode(LED, OUTPUT); // blinking LED according to the heartbeat
+  dht.begin();
 
   Serial.begin(9600); // setting up serial communication at certain speed
 }
@@ -30,6 +39,10 @@ void loop() {
   float x_avalue = x_scaled / 1000.0;
   float y_avalue = y_scaled / 1000.0;
   float z_avalue = z_scaled / 1000.0;
+
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  float f = dht.readTemperature(true);
   
   Serial.print("X, Y, Z :: ");
   Serial.print(x_raw);
@@ -56,7 +69,34 @@ void loop() {
     digitalWrite(LED, LOW);
   }
   
-  delay(200);
+  // Humidity & Temperature
+  if (isnan(h) || isnan(t) || isnan(f)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  float hif = dht.computeHeatIndex(f, h);
+  float hic = dht.computeHeatIndex(t, h, false);
+
+  Serial.print("Humidity: ");
+  Serial.print(h);
+  Serial.print(" % ");
+  Serial.print("Temperature: ");
+  Serial.print(t);
+  Serial.print(" \xC2\xB0");
+  Serial.print("C | ");
+  Serial.print(f);
+  Serial.print(" \xC2\xB0");
+  Serial.print("F ");
+  Serial.print("Heat index: ");
+  Serial.print(hic);
+  Serial.print(" \xC2\xB0");
+  Serial.print("C | ");
+  Serial.print(hif);
+  Serial.print(" \xC2\xB0");
+  Serial.println("F"); 
+
+  delay(1000);
 }
 
 // Gyroscope
