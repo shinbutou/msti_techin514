@@ -61,6 +61,7 @@ void loop() {
 
   // Pulse Sensor
   pulse_signal = analogRead(pulse_pin);  // Read the PulseSensor's value.
+  Serial.print("Pulse: ");
   Serial.println(pulse_signal);
 
   if(pulse_signal > threshold) {
