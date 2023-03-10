@@ -3,6 +3,11 @@
 float accel_x, accel_y, accel_z;
 // Accelerometer Parameters: End
 
+// Temperature/Humidity Sensor Parameters: Start
+#include <Arduino_HS300x.h>
+float temperature, humidity;
+// Temperature/Humidity Sensor Parameters: End
+
 // Pulse Sensor Parameters: Start
 int pulse_pin = 3;
 int onboard_red_led = 22;
@@ -41,6 +46,12 @@ void setup() {
   Serial.println(" Hz");
   // Accelerometer Setup: Start
 
+  // Temperature/Humidity Sensor Setup: Start
+  if (!HS300x.begin()) {
+    Serial.println("Failed to initialize temperature/humidity sensor!");
+  }
+  // Temperature/Humidity Sensor Setup: End
+
   Serial.println("Board Initialized!");
 }
 
@@ -78,7 +89,16 @@ void loop() {
     // Serial.print(", ");
     // Serial.print(accel_y);
     // Serial.print(", ");
-    // Serial.println(accel_z); // The optimal refresh rate could be 100 ms.
+    // Serial.print(accel_z); // The optimal refresh rate could be 100 ms.
   }
   // Accelerometer Code: End
+
+  // Temperature/Humidity Sensor Code: Start
+  temperature = HS300x.readTemperature();
+  humidity = HS300x.readHumidity();
+  // Serial.print(temperature);
+  // Serial.print(", "); // Temperature in Celsius.
+  // Serial.print(humidity);
+  // Serial.println(", "); // Humidity in percentage.
+  // Temperature/Humidity Sensor Code: End
 }
