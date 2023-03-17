@@ -41,8 +41,10 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
 int gameScreen = 1;
 int moves = 1;
-
 int winner = 0;  //0 = Draw, 1 = Human, 2 = CPU
+
+int nonlosing_games = 0;
+bool losing_previous = false;
 
 boolean buttonEnabled = true;
 
@@ -71,14 +73,14 @@ void loop()
    p.x = map(p.x, TS_MAXX, TS_MINX, 0, 320);
    p.y = map(p.y, TS_MAXY, TS_MINY, 0, 240);
 
-   Serial.print("X = "); Serial.print(p.x);
-   Serial.print("\tY = "); Serial.print(p.y);
-   Serial.print("\n");
+  //  Serial.print("X = "); Serial.print(p.x);
+  //  Serial.print("\tY = "); Serial.print(p.y);
+  //  Serial.print("\n");
        
    if(p.x>60 && p.x<260 && p.y>180 && p.y<220 && buttonEnabled)// The user has pressed inside the red rectangle
    {
     buttonEnabled = false; //Disable button
-    Serial.println("Button Pressed");
+    Serial.println("GAME STARTS");
     resetGame();  
     //This is important, because the libraries are sharing pins
    pinMode(XM, OUTPUT);
@@ -91,8 +93,6 @@ void loop()
    delay(10);  
   }
 }
-
-
 
 void resetGame()
 {
@@ -108,7 +108,7 @@ void resetGame()
 
 void drawStartScreen()
 {
-   tft.fillScreen(BLACK);
+  tft.fillScreen(BLACK);
   
   //Draw white frame
   tft.drawRect(0,0,319,240,WHITE);
@@ -126,12 +126,11 @@ void drawStartScreen()
   tft.print("Arduino");
 
   createStartButton();
-  
 }
 
 void createStartButton()
 {
-    //Create Red Button
+  //Create Red Button
   tft.fillRect(60,180, 200, 40, RED);
   tft.drawRect(60,180,200,40,WHITE);
   tft.setCursor(72,188);
@@ -153,13 +152,9 @@ void drawGameScreen()
 
    //Draw frame
    tft.drawRect(0,0,319,240,WHITE);
-
    drawVerticalLine(125);
-
    drawVerticalLine(195);
-
    drawHorizontalLine(80);
-
    drawHorizontalLine(150);
 }
 
@@ -178,13 +173,18 @@ void drawGameOverScreen()
   tft.print("GAME OVER");
   
 
- if(winner == 0)
-{
+ if (winner == 0) {
   //Print "DRAW!" text 
   tft.setCursor(110,100);
   tft.setTextColor(YELLOW);
   tft.setTextSize(4);
   tft.print("DRAW");
+  
+  losing_previous = false;
+
+  if (losing_previous == false) {
+    nonlosing_games += 1;
+  }
 }
  if(winner == 1)
 {
@@ -193,28 +193,43 @@ void drawGameOverScreen()
   tft.setTextColor(BLUE);
   tft.setTextSize(4);
   tft.print("HUMAN WINS");
+  
+  losing_previous = false;
+
+  if (losing_previous == false) {
+    nonlosing_games += 1;
+  }
 }
 
  if(winner == 2)
 {
   //Print "CPU WINS!" text 
-  tft.setCursor(60,100);
+  tft.setCursor(60, 100);
   tft.setTextColor(RED);
   tft.setTextSize(4);
   tft.print("CPU WINS");
+
+  losing_previous = true;
+  nonlosing_games = 0;
 }
 
-   createPlayAgainButton();
+  if (nonlosing_games == 3) {
+    Serial.println("working!");
+    createPassingNotice();
+    delay(10000);
+    drawTimeScreen();
+  } else {
+    createPlayAgainButton();
+    pinMode(XM, OUTPUT);
+    pinMode(YP, OUTPUT);
+  }
 
-   pinMode(XM, OUTPUT);
-   pinMode(YP, OUTPUT);
-
-   
+  Serial.println(nonlosing_games);
 }
 
 void createPlayAgainButton()
 {
-   //Create Red Button
+  //Create Red Button
   tft.fillRect(60,180, 200, 40, RED);
   tft.drawRect(60,180,200,40,WHITE);
   tft.setCursor(72,188);
@@ -223,6 +238,27 @@ void createPlayAgainButton()
   tft.print("Play Again");
 }
 
+void createPassingNotice()
+{
+  //Create Red Button
+  tft.fillRect(60, 180, 200, 40, CYAN);
+  tft.drawRect(60, 180, 200, 40, WHITE);
+  tft.setCursor(90, 188);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(3);
+  tft.print("Morning!");
+}
+
+void drawTimeScreen()
+{
+  tft.fillScreen(BLACK);
+  tft.drawRect(0, 0, 319, 240, WHITE);
+  
+  tft.setCursor(22, 85);
+  tft.setTextColor(WHITE);
+  tft.setTextSize(9);
+  tft.print("11:30");  
+}
 
 void drawHorizontalLine(int y)
 {
@@ -246,15 +282,13 @@ void playGame()
 {
   do
   {
-    if(moves%2==1)
-    {
+    if (moves % 2 == 0) {
      arduinoMove();
-     printBoard();
+     // printBoard();
      checkWinner();
-    }else
-    {
+    } else {
       playerMove(); 
-      printBoard();
+      // printBoard();
       checkWinner();  
     }
     moves++;
@@ -279,7 +313,9 @@ void playGame()
     gameScreen=3;
     drawGameOverScreen();
   }
-  
+  if (nonlosing_games == 3) {
+    gameScreen = 0;
+  }
 }
 
 void playerMove()
@@ -288,7 +324,7 @@ void playerMove()
   pinMode(YP, OUTPUT);
   TSPoint p;
   boolean validMove = false;
-  Serial.print("\nPlayer Move:");
+  // Serial.print("\nPlayer Move:");
   do
   {    
     p = ts.getPoint();  //Get touch point  
@@ -296,20 +332,20 @@ void playerMove()
     {
       p.x = map(p.x, TS_MAXX, TS_MINX, 0, 320);
       p.y = map(p.y, TS_MAXY, TS_MINY, 0, 240);
-      Serial.println(p.x);
-      Serial.println(p.y);
+      // Serial.println(p.x);
+      // Serial.println(p.y);
   
 
       if((p.x<115)&& (p.y>=150)) //6
       {
         if(board[6]==0)
         {
-          Serial.println("Player Move: 6");
+          // Serial.println("Player Move: 6");
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[6]=1;
           drawPlayerMove(6);  
-          Serial.println("Drawing player move");
+          // Serial.println("Drawing player move");
         }
       }
        else if((p.x>0 && p.x<115)&& (p.y<150 && p.y>80)) //3
@@ -317,19 +353,19 @@ void playerMove()
        
         if(board[3]==0)
         {
-         Serial.println("Player Move: 3");
+          // Serial.println("Player Move: 3");
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[3]=1;
           drawPlayerMove(3);  
-          Serial.println("Drawing player move");
+          // Serial.println("Drawing player move");
         }
       }
        else if((p.x<125)&& (p.y<80)) //0
       {
         if(board[0]==0)
         {
-          Serial.println("Player Move: 0");          
+          // Serial.println("Player Move: 0");          
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[0]=1;
@@ -341,7 +377,7 @@ void playerMove()
       {
         if(board[1]==0)
         {
-          Serial.println("Player Move: 1");          
+          // Serial.println("Player Move: 1");          
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[1]=1;
@@ -353,7 +389,7 @@ void playerMove()
       {
         if(board[2]==0)
         {
-          Serial.println("Player Move: 2");          
+          // Serial.println("Player Move: 2");          
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[2]=1;
@@ -365,7 +401,7 @@ void playerMove()
       {
         if(board[4]==0)
         {
-          Serial.println("Player Move: 4");          
+          // Serial.println("Player Move: 4");          
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[4]=1;
@@ -377,7 +413,7 @@ void playerMove()
       {
         if(board[5]==0)
         {
-          Serial.println("Player Move: 5");          
+          // Serial.println("Player Move: 5");          
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[5]=1;
@@ -389,7 +425,7 @@ void playerMove()
       {
         if(board[7]==0)
         {
-          Serial.println("Player Move: 7");          
+          // Serial.println("Player Move: 7");          
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[7]=1;
@@ -401,7 +437,7 @@ void playerMove()
       {
         if(board[8]==0)
         {
-          Serial.println("Player Move: 8");          
+          // Serial.println("Player Move: 8");          
           pinMode(XM, OUTPUT);
           pinMode(YP, OUTPUT);
           board[8]=1;
@@ -450,7 +486,7 @@ void arduinoMove()
   int b = 0;
   int counter =0;
   int movesPlayed = 0;
-  Serial.print("\nArduino Move:");
+  // Serial.print("\nArduino Move:");
 
   int firstMoves[]={0,2,6,8}; // will use these positions first
 
@@ -471,8 +507,8 @@ void arduinoMove()
       {  
         delay(1000);
         board[c]=2;
-        Serial.print(firstMoves[randomMove]);
-        Serial.println();
+        // Serial.print(firstMoves[randomMove]);
+        // Serial.println();
         drawCpuMove(firstMoves[randomMove]);
         b=1;
       }   
@@ -489,8 +525,8 @@ void arduinoMove()
       {  
         delay(1000);
         board[randomMove]=2;
-        Serial.print(randomMove);
-        Serial.println();
+        // Serial.print(randomMove);
+        // Serial.println();
         drawCpuMove(randomMove);
         b=1;
       }   
@@ -503,8 +539,8 @@ void arduinoMove()
       {  
         delay(1000);
         board[c]=2;
-        Serial.print(firstMoves[randomMove]);
-        Serial.println();
+        // Serial.print(firstMoves[randomMove]);
+        // Serial.println();
         drawCpuMove(firstMoves[randomMove]);
         b=1;
       }   
