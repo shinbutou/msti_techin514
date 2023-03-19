@@ -37,7 +37,7 @@ void setup() {
 
   // RTC Chip Setup: Start
   URTCLIB_WIRE.begin();
-  rtc.set(0, 11, 7, 6, 10, 3, 23);
+  rtc.set(0, 0, 12, 6, 17, 3, 23);
   // rtc.set(second, minute, hour, dayOfWeek, dayOfMonth, month, year)
   // dayOfWeek (1=Sunday, 7=Saturday)
   // RTC Chip Setup: End
@@ -124,7 +124,7 @@ void loop() {
       
       int delta_m = delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
 
-      Serial.print(delta_m);
+  Serial.print(delta_m);  ZŹZŽ
       Serial.print("; ");
 
       if (delta_m > 33333333 && t >= 3333) {
